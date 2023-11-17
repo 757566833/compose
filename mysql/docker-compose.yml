@@ -1,0 +1,14 @@
+version: '3'
+services:
+  mysql:
+    container_name: local_mysql
+    image: mysql:8.0.30
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - 3306:3306
+    volumes:
+      - ./conf.d:/etc/mysql/conf.d
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    restart: always

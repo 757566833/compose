@@ -1,0 +1,7 @@
+vendor
+main
+.idea
+.vscode
+#.env
+logs
+minio
