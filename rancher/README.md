@@ -64,14 +64,44 @@ ip_tables              28672  1 iptable_filter
 
 ```
 
+# start on boot
+
+
+```
+sudo vim /etc/systemd/system/iptable_modules.service
+```
+
+```
+
+
+
+[Unit]
+Description=Load kernel ip_table  modules
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/modprobe ip_tables
+ExecStart=/sbin/modprobe ip_conntrack
+ExecStart=/sbin/modprobe iptable_filter
+ExecStart=/sbin/modprobe ipt_state
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```
+systemctl enable iptable_modules.service
+```
+
 # working without iptable
 
 version set 2.4.9
 
 
-### other
+# other
 
 https://github.com/rancher/rancher/issues/37958
+
 
 
 
