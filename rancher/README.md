@@ -69,6 +69,10 @@ ip_tables              28672  1 iptable_filter
 version set 2.4.9
 
 
+### other
+
+https://github.com/rancher/rancher/issues/37958
+
 
 
 -----------------   
