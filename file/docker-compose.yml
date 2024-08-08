@@ -1,4 +1,4 @@
-version: '3'
+
 services:
   minioDB:
     container_name: minio
