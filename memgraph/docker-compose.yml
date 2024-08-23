@@ -1,0 +1,24 @@
+services:
+  memgraph:
+    image: memgraph/memgraph-mage:1.19-memgraph-2.19
+    container_name: memgraph-mage
+    user: root
+    volumes:
+      - ./mg_lib:/var/lib/memgraph
+      - ./mg_log:/var/log/memgraph
+      - ./mg_etc:/etc/memgraph
+    ports:
+      - "7687:7687"
+      - "7444:7444"
+    command: ["--log-level=TRACE"]
+ 
+  lab:
+    image: memgraph/lab:2.16.0
+    container_name: memgraph-lab
+    ports:
+      - "3000:3000"
+    depends_on:
+      - memgraph
+    environment:
+      - QUICK_CONNECT_MG_HOST=memgraph
+      - QUICK_CONNECT_MG_PORT=7687
