@@ -2,6 +2,7 @@ services:
   nexus3:
     image: sonatype/nexus3:3.76.0
     container_name: nexus3
+    restart: always
     volumes:
       - ./nexus-data:/nexus-data
     ports:
