@@ -1,22 +1,22 @@
-# version
+# Rancher
+
+## version
 
 stable verison is 2.7.9
 
-
-# desc
+## desc
 
 os is rocky linux@9
 
 As of Rocky Linux 9.0, iptables and all of the utilities associated with it, are deprecated. This means that future releases of the OS will be removing iptables. For that reason, it is highly recommended that you do not use this process. If you are familiar with iptables, we recommend using iptables Guide To firewalld. If you are new to firewall concepts, then we recommend firewalld For Beginners.
 
-https://docs.rockylinux.org/pt/guides/security/enabling_iptables_firewall/
-
+<https://docs.rockylinux.org/pt/guides/security/enabling_iptables_firewall/>
 
 ## k3s must use ip_tables
 
 disable firewalled and install iptables
 
-```
+```shell
 Stop firewalld:
 
 systemctl stop firewalld
@@ -45,35 +45,34 @@ systemctl enable iptables
 
 ## can‘t initialize iptables table `filter‘
 
-https://blog.csdn.net/qq_48391148/article/details/134972833
+<https://blog.csdn.net/qq_48391148/article/details/134972833>
 
 get list by keyword ip
-```
+
+```shell
  lsmod | grep ip
 ```
 
 if not has  iptable_filter
 
-
-```
-[root@localhost ~]# modprobe iptable_filter
-[root@localhost ~]# lsmod | grep ip
+```shell
+[root@localhost ~]##  modprobe iptable_filter
+[root@localhost ~]##  lsmod | grep ip
 iptable_filter         16384  0
 ip_tables              28672  1 iptable_filter
 ...
 
 ```
 
-# start on boot
+## start on boot
 
+### add custom service
 
-```
+```shell
 sudo vim /etc/systemd/system/iptable_modules.service
 ```
 
-```
-
-
+```shell
 
 [Unit]
 Description=Load kernel ip_table  modules
@@ -89,21 +88,28 @@ ExecStart=/sbin/modprobe ipt_state
 WantedBy=multi-user.target
 ```
 
-```
+```shell
 systemctl enable iptable_modules.service
 ```
 
-# working without iptable
+### add modules
+
+```shell
+vi /etc/modules-load.d/iptables.conf
+
+ip_tables
+ip_conntrack
+iptable_filter
+ipt_state
+```
+
+## working without iptable
 
 version set 2.4.9
 
+## other
 
-# other
+<https://github.com/rancher/rancher/issues/37958>
 
-https://github.com/rancher/rancher/issues/37958
-
-
-
-
------------------   
-2023.12.22 
+-----------------
+2023.12.22
