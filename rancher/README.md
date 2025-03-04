@@ -127,5 +127,35 @@ sudo podman run --rm --user 0 --entrypoint "" -v $(pwd):/output:Z rancher/ranche
 
 <https://forums.rancher.cn/t/rancher/3317>
 
+## podman quadlet
+
+```shell
+/etc/containers/systemd/rancher.container
+
+[Unit]
+Description=Rancher Container
+Wants=network.target
+After=network.target
+
+[Container]
+Image=rancher/rancher:v2.10.3
+ContainerName=rancher
+Volume=/home/rancher/rancher:/var/lib/rancher:Z
+Volume=/home/rancher/log:/var/log:Z
+Environment=AUDIT_LEVEL=1
+Environment=CATTLE_SYSTEM_DEFAULT_REGISTRY=registry.cn-hangzhou.aliyuncs.com
+PublishPort=4000:80
+PublishPort=4443:443
+PodmanArgs=--privileged
+Exec=--no-cacerts
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
 -----------------
 2025.3.4
