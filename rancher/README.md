@@ -2,7 +2,7 @@
 
 ## version
 
-stable verison is 2.7.9
+stable verison is 2.10.3
 
 ## desc
 
@@ -105,11 +105,27 @@ ipt_state
 
 ## working without iptable
 
-version set 2.4.9
+rancher version set 2.4.9
 
 ## other
 
 <https://github.com/rancher/rancher/issues/37958>
 
+## init rancher with docker or podman volume
+
+<https://forums.rancher.cn/t/docker-run-rancher-rancher-mirrored-pause/3546>
+
+if podman
+
+```shell
+sudo podman run --rm --user 0 --entrypoint "" -v $(pwd):/output:Z rancher/rancher:v2.10.3 cp /var/lib/rancher/k3s/agent/images/k3s-airgap-images.tar /output/k3s-airgap-images.tar
+```
+
+## use in china
+
+<https://forums.rancher.cn/t/rancher/3366>
+
+<https://forums.rancher.cn/t/rancher/3317>
+
 -----------------
-2023.12.22
+2025.3.4
