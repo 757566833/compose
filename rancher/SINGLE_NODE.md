@@ -62,6 +62,21 @@ ipt_state
 curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server  --cluster-init
 ```
 
+## k3s registry
+
+```
+// vi /etc/rancher/k3s/registries.yaml
+
+
+mirrors:
+  docker.io:
+    endpoint:
+      - "registry.cn-hangzhou.aliyuncs.com"
+
+
+// systemctl restart k3s
+```
+
 ## config
 
 <https://ranchermanager.docs.rancher.com/zh/how-to-guides/new-user-guides/kubernetes-cluster-setup/k3s-for-rancher>
