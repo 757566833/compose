@@ -76,6 +76,24 @@ mirrors:
 
 // systemctl restart k3s
 ```
+## k3s forward
+
+<https://forums.rancher.cn/t/rancher-lb-ssl-tls/1707>
+
+```
+// vi /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    additionalArguments:
+      - "--entryPoints.web.proxyProtocol.insecure"
+      - "--entryPoints.web.forwardedHeaders.insecure"
+```
 
 ## config
 
