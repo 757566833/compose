@@ -34,7 +34,7 @@ systemctl mask firewalld
 dnf install iptables-services iptables-utils -y
 
 
-systemctl enable iptables
+systemctl enable --now iptables
 
 ```
 
