@@ -64,7 +64,7 @@ curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server  --cluster-init
 
 ## k3s registry
 
-```
+```shell
 // vi /etc/rancher/k3s/registries.yaml
 
 
@@ -76,11 +76,12 @@ mirrors:
 
 // systemctl restart k3s
 ```
+
 ## k3s forward
 
 <https://forums.rancher.cn/t/rancher-lb-ssl-tls/1707>
 
-```
+```shell
 // vi /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
 
 apiVersion: helm.cattle.io/v1
