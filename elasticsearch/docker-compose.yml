@@ -7,6 +7,7 @@ services:
     mem_limit: 1GB
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
+      - ./plugins:/usr/share/elasticsearch/plugins
     environment:
       - ELASTIC_PASSWORD=123456
       - bootstrap.memory_lock=true
