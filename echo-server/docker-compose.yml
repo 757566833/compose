@@ -1,0 +1,9 @@
+
+services:
+  rancher:
+    image: ealen/echo-server:0.9.2
+    container_name: echo-server
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "10080:80"
