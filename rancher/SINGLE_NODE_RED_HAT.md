@@ -139,5 +139,5 @@ kubectl create namespace cattle-system
 <https://ranchermanager.docs.rancher.com/zh/getting-started/installation-and-upgrade/install-upgrade-on-a-kubernetes-cluster>
 
 ```shell
-helm install rancher rancher-stable/rancher  --namespace cattle-system --set hostname=xxx.xxx.com  --set tls=external --set bootstrapPassword=123456789 --set rancherImage=registry.cn-hangzhou.aliyuncs.com/rancher/rancher   --set systemDefaultRegistry=registry.cn-hangzhou.aliyuncs.com --set replicas=1
+helm install rancher rancher-stable/rancher  --namespace cattle-system --set hostname=<xxx.xxx.com>  --set tls=external --set bootstrapPassword=zxc_123456 --set rancherImage=registry.cn-hangzhou.aliyuncs.com/rancher/rancher   --set systemDefaultRegistry=registry.cn-hangzhou.aliyuncs.com --set replicas=1
 ```
