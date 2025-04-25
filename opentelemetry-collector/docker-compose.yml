@@ -1,3 +1,4 @@
+# opentelemetry-collector 没有jaeger
 services:
   opentelemetry-collector:
     image: otel/opentelemetry-collector:0.123.0
