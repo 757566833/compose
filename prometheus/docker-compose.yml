@@ -1,0 +1,10 @@
+
+services:
+  rancher:
+    image: prom/prometheus:v3.3.0
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/prometheus
+    ports:
+      - "9090:9090"

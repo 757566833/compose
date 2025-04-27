@@ -1,0 +1,36 @@
+# This is a configuration file for the OpenTelemetry Collector intended to be
+# used in conjunction with the opentelemetry-otlp example.
+#
+# For more information about the OpenTelemetry Collector see:
+#   https://github.com/open-telemetry/opentelemetry-collector
+#
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+exporters:
+  debug:
+    verbosity: detailed
+  otlp/jaeger:
+    endpoint: 192.168.246.22:14317
+    tls:
+      insecure: true
+  # otlphttp:
+  #   endpoint: http://192.168.246.22:14318
+  #   tls:
+  #     insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug,otlp/jaeger]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]

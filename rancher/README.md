@@ -14,7 +14,7 @@ As of Rocky Linux 9.0, iptables and all of the utilities associated with it, are
 
 ## k3s must use ip_tables
 
-disable firewalled and install iptables
+if use rocky linux disable firewalled and install iptables
 
 ```shell
 Stop firewalld:
