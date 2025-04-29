@@ -4,12 +4,13 @@ services:
     container_name: grafana-tempo
     ports:
       - "3200:3200"
-      - "24317:4317"
-      - "24318:4318"
+      # - "24317:4317"
+      # - "24318:4318"
       # Jaeger 用的端口
       # - "14268:14268"
       # zipkin 用的端口
       # - "9411:9411"
+    restart: unless-stopped
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml           # 挂配置文件
       - ./tempo-data:/var/tempo/traces          # 挂数据目录

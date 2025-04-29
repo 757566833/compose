@@ -1,0 +1,12 @@
+services:
+  grafana-promtail:
+    image: grafana/promtail:3.5
+    container_name: grafana-promtail
+    ports:
+     - "9080:9080"
+     - "34317:4317"
+    restart: unless-stopped
+    volumes:
+      - ./log:/var/log  # 宿主机上的日志目录，Promtail 将从这个目录读取日志
+      - ./config.yml:/etc/promtail/config.yml  # Promtail 配置文件
+    

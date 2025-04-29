@@ -3,9 +3,9 @@ services:
   minioDB:
     container_name: minio
     image: minio/minio:RELEASE.2024-12-18T13-15-44Z
-    command: server /data --console-address ":9080"
+    command: server /data --console-address ":9001"
     ports:
-      - 9080:9080
+      - 9001:9001
       - 9000:9000
     restart: always
     volumes:
