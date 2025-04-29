@@ -6,11 +6,13 @@
 swapoff -a
 
 
-/etc/fstab
+vi /etc/fstab
 
-remove line
+// red hat remove line
 /dev/mapper/rl-swap     none                    swap    defaults        0 0
 
+// ubuntu remove line 
+/swap.img      none    swap    sw      0       0
 ```
 
 ## selinux
@@ -26,7 +28,7 @@ sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 dnf install tar git -y
 ```
 
-## firewalld
+## redhat firewalld
 
 ```shell
 
@@ -35,6 +37,13 @@ systemctl stop firewalld
 systemctl disable firewalld
 
 systemctl mask firewalld
+
+```
+
+## ubuntu UFW
+
+```shell
+sudo ufw disable 
 
 ```
 
