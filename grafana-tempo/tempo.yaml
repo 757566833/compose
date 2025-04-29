@@ -1,0 +1,16 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    # jaeger:
+    otlp:
+    # zipkin:
+
+storage:
+  trace:
+    backend: local          # <<< 注意！！！指定 local 存储
+    local:
+      path: /var/tempo/traces # 挂载的本地目录

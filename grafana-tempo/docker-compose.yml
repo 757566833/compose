@@ -1,0 +1,17 @@
+services:
+  grafana-tempo:
+    image: grafana/tempo:main-c3202b6
+    container_name: grafana-tempo
+    ports:
+      - "3200:3200"
+      - "24317:4317"
+      - "24318:4318"
+      # Jaeger 用的端口
+      # - "14268:14268"
+      # zipkin 用的端口
+      # - "9411:9411"
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml           # 挂配置文件
+      - ./tempo-data:/var/tempo/traces          # 挂数据目录
+    command: [ "-config.file=/etc/tempo.yaml" ] # 指定启动参数
+    

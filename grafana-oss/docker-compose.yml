@@ -1,0 +1,12 @@
+services:
+  grafana-oss:
+    image: grafana/grafana-oss:11.6.1
+    container_name: grafana-oss
+    ports:
+      - "9700:3000"
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./data:/var/lib/grafana
