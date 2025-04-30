@@ -22,10 +22,8 @@ exporters:
     endpoint: 192.168.246.22:24317
     tls:
       insecure: true
-  otlp/promtail:
-    endpoint: 192.168.246.22:34317
-    tls:
-      insecure: true
+  otlphttp:
+    endpoint: http://192.168.246.22:3100/otlp
 
 service:
   pipelines:
@@ -37,4 +35,4 @@ service:
       exporters: [debug]
     logs:
       receivers: [otlp]
-      exporters: [debug,otlp/promtail]
+      exporters: [debug,otlphttp]
