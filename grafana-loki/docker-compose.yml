@@ -5,7 +5,8 @@ services:
     ports:
      - "3100:3100"
     restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./loki-config:/etc/loki
-      - ./loki-data:/loki
+      - ./loki-config/local-config.yaml:/etc/loki/local-config.yaml
+      - ./loki-data:/tmp/loki
     
