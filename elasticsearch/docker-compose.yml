@@ -24,4 +24,4 @@ services:
     ports:
       - "5601:5601"
     environment:
-      - ELASTICSEARCH_HOSTS=http://192.168.246.22:9200
+      - ELASTICSEARCH_HOSTS=http://${ES_IP}:${ES_PORT}
