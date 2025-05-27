@@ -1,0 +1,10 @@
+services:
+  pgadmin4:
+    image: dpage/pgadmin4:9.3.0
+    container_name: pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@fzcode.com
+      PGADMIN_DEFAULT_PASSWORD: 123456
+    restart: always
+    ports:
+      - "30001:80"
