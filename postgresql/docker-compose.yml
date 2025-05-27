@@ -1,12 +1,8 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17.5
     container_name: postgres
     environment:
-      POSTGRES_DB: my_database
-      POSTGRES_USER: my_user
       POSTGRES_PASSWORD: my_password
     restart: always
     ports:
