@@ -1,0 +1,2 @@
+/Applications/Blender.app/Contents/Resources/5.0/python/bin/python3.11 -m ensurepip
+/Applications/Blender.app/Contents/Resources/5.0/python/bin/python3.11 -m pip install fastapi uvicorn python-multipart

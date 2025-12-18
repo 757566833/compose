@@ -77,4 +77,4 @@ async def transcribe_audio(file: UploadFile = File(...)):
 # 健康检查接口
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "model": model_name, "device": str(device)}
+    return {"status": "ok", "model": model_id, "device": str(device)}

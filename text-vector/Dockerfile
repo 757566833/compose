@@ -1,12 +1,17 @@
 # 使用单阶段构建简化部署
 FROM python:3.10-slim
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 # 1. 设置工作目录
 WORKDIR /app
 
 # 2. 拷贝依赖和应用代码
 COPY requirements.txt .
-COPY ./app.py .
 
 # 3. 安装依赖
 # 注意：第一次运行时，SBERT 会自动下载模型权重
@@ -18,6 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY download_models.py .
 RUN python download_models.py
 
+COPY ./app.py .
 # 4. 暴露端口 (例如使用 8001)
 EXPOSE 8000
 
