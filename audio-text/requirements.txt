@@ -1,0 +1,12 @@
+# 基础服务
+fastapi
+uvicorn[standard]
+python-multipart 
+# Whisper 模型
+transformers
+# 底层 PyTorch
+torch
+# 音频处理库
+librosa 
+# 确保在安装 PyTorch 的 Docker 镜像中运行此命令
+# *注意：Whisper 运行时还需要 FFmpeg，我们将在 Dockerfile 中安装*

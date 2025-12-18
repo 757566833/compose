@@ -1,0 +1,20 @@
+services:
+  ollama:
+    # 1. 指定使用的 Docker 鏡像
+    image: ollama/ollama:0.13.4
+    
+    # 2. 設置容器名稱 (--name ollama)
+    container_name: ollama
+    
+    # 3. 設置端口映射 (-p 11434:11434)
+    # 格式為 HOST:CONTAINER
+    ports:
+      - "11434:11434"
+      
+    # 4. 設置數據卷持久化 (-v ollama:/root/.ollama)
+    # 使用 Docker 命名卷來存儲模型數據
+    volumes:
+      - ./ollama_data:/root/.ollama
+      
+    # 5. 設置重啟策略 (推薦，確保服務在系統重啟後自動啟動)
+    restart: unless-stopped

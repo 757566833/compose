@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart 
+# 深度学习框架
+torch
+# 图像和文本处理
+transformers
+# 视频和音频处理
+opencv-python
+librosa
+numpy
+Pillow
