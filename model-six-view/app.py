@@ -176,7 +176,7 @@ async def health_check():
 @app.post("/render")
 async def handle_render(
     file: UploadFile = File(...),
-    res: int = Query(256, description="分辨率大小，默认为 256") # 在 URL 中接收 ?res=512
+    res: int = Query(512, description="分辨率大小，默认为 512") # 在 URL 中接收 ?res=512
 ):
     # 格式白名单
     ext = os.path.splitext(file.filename)[1].lower()
