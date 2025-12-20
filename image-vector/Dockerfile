@@ -1,5 +1,5 @@
 # --- 阶段 1: 基础环境和依赖安装 ---
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS builder
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 
 
 RUN apt-get update && \
@@ -16,7 +16,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
-# ENV HF_ENDPOINT=https://hf-mirror.com
+ENV HF_ENDPOINT=https://hf-mirror.com
 
 # 复制下载脚本并运行
 COPY download_models.py .

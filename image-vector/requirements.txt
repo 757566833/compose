@@ -1,12 +1,16 @@
-# 用于构建高性能 HTTP API
+# 基础 Web 框架
 fastapi
 uvicorn[standard]
-# *** 新增这一行 ***
-python-multipart 
-# ******************
-# 用于图像处理和 AI 模型
+httpx
+python-multipart
+
+# 图像处理
 Pillow
-# Hugging Face 生态，实现 CLIP 模型
+
+# AI 与深度学习 (指定版本以保证兼容性)
 transformers
 torch
 torchvision
+
+# 数据处理
+numpy

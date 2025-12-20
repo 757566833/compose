@@ -1,65 +1,130 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from PIL import Image
+from pydantic import BaseModel, HttpUrl
 import io
 import torch
+import httpx
+import tempfile
+import os
 from transformers import CLIPProcessor, CLIPModel
-import base64
+from typing import List
+from pathlib import Path
 
 app = FastAPI(title="Image Vectorization Service")
 
 # --- 模型加载与初始化 ---
-# 优先使用 CUDA 或 Mac M4 的 MPS 加速，否则使用 CPU
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_name = "openai/clip-vit-base-patch32"
 
 try:
-    # 首次运行会自动下载模型权重
+    # 加载 CLIP 模型和处理器
     model = CLIPModel.from_pretrained(model_name).to(device)
-    processor = CLIPProcessor.from_pretrained(model_name)
+    processor = CLIPProcessor.from_pretrained(model_name, use_fast=True)
     print(f"Model loaded successfully on device: {device}")
 except Exception as e:
     print(f"Error loading model: {e}")
-    # 生产环境中应处理模型加载失败的情况
 
-# --- API 接口定义 ---
+# --- 核心提取逻辑 (基于临时文件路径) ---
 
-@app.post("/vectorize/image")
-async def vectorize_image(file: UploadFile = File(...)):
+def get_vector_from_temp_file(file_path: str) -> List[float]:
     """
-    接收一张图片文件，返回其 512 维的向量（Embedding）
+    核心方法：从磁盘临时文件路径读取并提取向量
     """
-    if not file.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail="File must be an image.")
-
     try:
-        # 1. 读取图片文件
-        content = await file.read()
-        image = Image.open(io.BytesIO(content)).convert("RGB")
+        # 使用 Pillow 打开图片并确保是 RGB 模式
+        image = Image.open(file_path).convert("RGB")
         
-        # 2. 预处理
+        # 预处理
         inputs = processor(images=image, return_tensors="pt").to(device)
         
-        # 3. 计算向量
+        # 计算 Embedding
         with torch.no_grad():
             image_features = model.get_image_features(**inputs)
         
-        # 4. 规范化并转换为 list
-        # 向量通常需要 L2 规范化
+        # L2 规范化
         image_vector = image_features / image_features.norm(p=2, dim=-1, keepdim=True)
-        vector_list = image_vector.squeeze().cpu().numpy().tolist()
+        
+        return image_vector.squeeze().cpu().numpy().tolist()
+    except Exception as e:
+        raise ValueError(f"模型提取特征失败: {str(e)}")
 
+# --- API 接口定义 ---
+@app.post("/vectorize/image/file", summary="通过上传图片文件提取向量")
+async def vectorize_image(file: UploadFile = File(...)):
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="文件必须是图片类型")
+
+    tmp_path = None
+    try:
+        suffix = Path(file.filename).suffix if file.filename else ".tmp"
+        
+        # 1. 采用 delete=False，这样我们可以安全地在 close 后手动控制
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name  # 记录路径
+        
+        # 2. 走出 with 块，此时文件句柄已关闭，任何进程都能安全读取 tmp_path
+        vector = get_vector_from_temp_file(tmp_path)
+        
         return {
             "filename": file.filename,
-            "vector_dimension": len(vector_list),
-            # 为了减少响应体积，通常会对向量进行压缩或只返回重要的部分，
-            # 这里返回完整的向量列表
-            "vector": vector_list
+            "vector_dimension": len(vector),
+            "vector": vector
         }
-
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal processing error: {e}")
+        raise HTTPException(status_code=500, detail=f"内部处理错误: {e}")
+    finally:
+        # 3. 无论成功失败，都在 finally 块中物理删除文件
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception as e:
+                print(f"警告：临时文件清理失败 {tmp_path}: {e}")
 
-# (可选) 增加一个健康检查接口
-@app.get("/health")
+class TranscribeRequest(BaseModel):
+    url: HttpUrl
+@app.post("/vectorize/image/url")
+async def vectorize_url(request_data: TranscribeRequest):
+    tmp_path = None
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(str(request_data.url))
+            if response.status_code != 200:
+                raise HTTPException(status_code=400, detail="下载失败")
+
+            # 准备临时文件
+            suffix = Path(request_data.url.path or "").suffix or ".tmp"
+            # 注意：delete=False 是关键，这样我们可以手动控制在文件关闭后再读取
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                tmp.write(response.content)
+                tmp_path = tmp.name 
+            
+            # 在 with 块外（即文件已关闭状态）调用推理
+            vector = get_vector_from_temp_file(tmp_path)
+            return {"url": str(request_data.url), "vector": vector, "vector_dimension": len(vector)}
+
+    finally:
+        # 无论成功还是报错，都在这里彻底清理
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except:
+                pass
+
+# --- 健康检查接口 ---
+
+@app.get("/health", summary="服务健康状态检查")
 def health_check():
-    return {"status": "ok", "model": model_name, "device": str(device)}
+    """
+    返回当前模型信息和运行设备状态
+    """
+    return {
+        "status": "active",
+        "model": model_name,
+        "device": str(device),
+        "api_version": "1.1",
+        "temp_file_support": True
+    }
