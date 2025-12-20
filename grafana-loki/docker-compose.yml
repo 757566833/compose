@@ -1,6 +1,6 @@
 services:
   grafana-loki:
-    image: grafana/loki:3.5
+    image: grafana/loki:3.6.3
     container_name: grafana-loki
     ports:
      - "3100:3100"

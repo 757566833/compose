@@ -1,6 +1,6 @@
 services:
   grafana-oss:
-    image: grafana/grafana-oss:11.6.1
+    image: grafana/grafana-oss:12.3.1
     container_name: grafana-oss
     ports:
       - "9700:3000"
