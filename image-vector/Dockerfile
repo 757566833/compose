@@ -1,5 +1,5 @@
 # --- 阶段 1: 基础环境和依赖安装 ---
-FROM python:3.10-slim AS builder
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS builder
 
 
 RUN apt-get update && \
@@ -27,4 +27,4 @@ COPY ./app.py .
 EXPOSE 8000
 
 # 4. 运行服务
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

@@ -1,1 +1,1 @@
-docker build -t video-vector .
+docker build --platform linux/amd64 -t video-vector .

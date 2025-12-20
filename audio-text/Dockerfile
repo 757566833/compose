@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 # 1. 安装 FFmpeg
 # apt-get update & install -y ffmpeg 是安装 librosa 依赖的关键步骤
@@ -31,4 +31,4 @@ COPY ./app.py .
 EXPOSE 8000
 
 # 6. 运行服务
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

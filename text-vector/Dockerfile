@@ -1,5 +1,5 @@
 # 使用单阶段构建简化部署
-FROM python:3.10-slim
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -29,4 +29,4 @@ EXPOSE 8000
 
 # 5. 运行服务
 # 确保使用 0.0.0.0 和指定的端口
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

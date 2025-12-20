@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-pptx
+boto3
+python-magic
+python-multipart
+python-dotenv

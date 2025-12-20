@@ -1,0 +1,13 @@
+services:
+  ppt-parse-service:
+    image: ppt-parse:latest
+    container_name: ppt-parse
+    ports:
+      - "8000:8000"
+    volumes:
+      # 映射宿主机的 /tmp/whisper 到容器的 /tmp
+      # 这样可以利用宿主机磁盘，且方便你在宿主机查看任务进度
+      - ./temp_data:/tmp
+    env_file:
+      - .env
+    restart: always

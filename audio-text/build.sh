@@ -1,1 +1,1 @@
-docker build -t audio-text .
+docker build --platform linux/amd64 -t audio-text .

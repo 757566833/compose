@@ -1,1 +1,1 @@
-docker build -t text-vector .
+docker build --platform linux/amd64 -t text-vector .

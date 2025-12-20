@@ -1,5 +1,5 @@
 # 使用 python:3.10-slim 作为基础镜像
-FROM python:3.10-slim
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
 # 1. 安装 FFmpeg 和 OpenCV 的运行时依赖
 # libsm6 和 libxext6 是 OpenCV 正常运行所必需的图形库依赖
@@ -36,4 +36,4 @@ COPY ./app.py .
 EXPOSE 8000
 
 # 6. 运行服务
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

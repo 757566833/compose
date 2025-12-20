@@ -61,16 +61,13 @@ async def process(file: UploadFile = File(...)):
                 # 尝试直接赋值
                     ocr_texts = ocr.ocr(img)
                 except Exception as e:
-                    print(f"发生异常: {e}")
                     ocr_texts = []  # 如果发生异常，ocr_texts 保持为空列表，或者你可以设置其他默认值
                 method = "paddlex_3.x_ocr"
 
-                print(type(ocr_texts))
                 ocr_result = []
                 for item in ocr_texts:
                     item_dict = {}
                     for key, value in item.items():
-                        print(f"{key}: {value}")
                         if  check_serializable(value):
                             item_dict[key] = value
                             ocr_result.append(item_dict)

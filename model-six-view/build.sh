@@ -1,1 +1,1 @@
-docker build -t model-six-view .
+docker build --platform linux/amd64,linux/arm64 -t model-six-view .
