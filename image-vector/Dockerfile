@@ -13,7 +13,7 @@ WORKDIR /app
 
 # 2. 拷贝依赖文件并安装 (使用 --no-cache-dir 减小镜像)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 # ENV HF_ENDPOINT=https://hf-mirror.com

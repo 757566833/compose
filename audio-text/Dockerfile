@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 
 # 1. 安装 FFmpeg
 # apt-get update & install -y ffmpeg 是安装 librosa 依赖的关键步骤
@@ -17,10 +17,10 @@ WORKDIR /app
 COPY requirements.txt .
 # 4. 安装 Python 依赖
 # 注意：这会安装 Whisper 模型和所有依赖
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
-# ENV HF_ENDPOINT=https://hf-mirror.com
+ENV HF_ENDPOINT=https://hf-mirror.com
 
 # 复制下载脚本并运行
 COPY download_models.py .

@@ -15,7 +15,7 @@ COPY requirements.txt .
 
 # 3. 安装依赖
 # 注意：第一次运行时，SBERT 会自动下载模型权重
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 # ENV HF_ENDPOINT=https://hf-mirror.com

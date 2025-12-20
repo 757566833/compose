@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 2. 安装 Python 依赖
 # 先复制 requirements.txt 以利用 Docker 缓存层
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
 # 3. 复制项目代码
 COPY . .
