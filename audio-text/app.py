@@ -54,8 +54,6 @@ async def transcribe_url(request_data: TranscribeRequest):
     """
     # 将 HttpUrl 对象转换为字符串
     url_str = str(request_data.url)
-
-    print(f"Downloading audio from URL: {url_str}")
     
     # 提取后缀：使用 Pydantic 对象的 path 属性更优雅，它会自动排除 Query 参数
     url_path = request_data.url.path or ""
@@ -119,7 +117,7 @@ async def process_transcription(tmp_path: str, original_source: str):
         }
 
     except Exception as e:
-        print(f"Transcription Error: {e}")
+        # print(f"Transcription Error: {e}")
         raise HTTPException(status_code=500, detail=f"Transcription processing error: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
