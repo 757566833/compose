@@ -1,54 +1,59 @@
-FROM nvidia/opengl:1.2-glvnd-runtime-ubuntu22.04
+# 使用 24.04 基础镜像
+FROM nvidia/cuda:13.1.0-runtime-ubuntu24.04
 
+ARG TARGETARCH
 ENV DEBIAN_FRONTEND=noninteractive
+ENV RUNNING_IN_DOCKER=true
 
+# 1. 安装系统依赖 (24.04 的包名基本一致)
 RUN apt-get update && apt-get install -y \
     wget \
     xz-utils \
+    libgl1 \
+    libgomp1 \
+    libx11-6 \
     libxi6 \
     libxrender1 \
-    libsm6 \
     libxkbcommon0 \
-    libxxf86vm1 \
+    libsm6 \
+    libdbus-1-3 \
     libxfixes3 \
-    python3 \
+    ca-certificates \
     python3-pip \
-    xorg \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /opt/blender
 
-# 根据架构选择正确的 Blender 版本
-RUN ARCH=$(uname -m) && \
-    if [ "$ARCH" = "x86_64" ]; then \
-        wget https://download.blender.org/release/Blender5.0/blender-5.0.1-linux-x64.tar.xz \
-        && tar -xf blender-5.0.1-linux-x64.tar.xz --strip-components=1 -C /usr/local \
-        && rm blender-5.0.1-linux-x64.tar.xz; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-        wget https://download.blender.org/release/Blender5.0/blender-5.0.1-linux-aarch64.tar.xz \
-        && tar -xf blender-5.0.1-linux-aarch64.tar.xz --strip-components=1 -C /usr/local \
-        && rm blender-5.0.1-linux-aarch64.tar.xz; \
-    else \
-        echo "Unsupported architecture: $ARCH"; \
-        exit 1; \
+# 2. 分架构处理
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        # AMD64: 直接上最新的 4.0.2
+        wget https://download.blender.org/release/Blender4.0/blender-4.0.2-linux-x64.tar.xz && \
+        tar -xf blender-4.0.2-linux-x64.tar.xz --strip-components=1 -C /opt/blender && \
+        rm blender-4.0.2-linux-x64.tar.xz; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        # ARM64: 使用 Ubuntu 24.04 仓库的 4.0.x 版本
+        apt-get update && apt-get install -y blender=4.0.2+dfsg-1ubuntu8 && \
+        # 建立软链接保持路径一致
+        ln -s /usr/bin/blender /opt/blender/blender; \
     fi
 
-# 安装 Python 依赖
-RUN pip3 install fastapi uvicorn python-multipart
+# 3. 动态安装 Python 依赖
+# 24.04 默认 Python 3.12，Blender 5.x 内部也是 3.11/3.12 左右，兼容性很好
+RUN B_PYTHON=$(find /opt/blender -name "python3*" -type f | grep bin/python || which python3) && \
+    $B_PYTHON -m pip install --upgrade pip --break-system-packages || true && \
+    $B_PYTHON -m pip install --no-cache-dir \
+    fastapi uvicorn python-multipart aiofiles httpx --break-system-packages
 
-# 复制应用代码
+# 4. 环境配置
+ENV PATH="/opt/blender:${PATH}"
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility
+
+WORKDIR /app
 COPY app.py /app/
 
-# 设置 Blender 路径
-ENV PATH="/usr/local/bin:${PATH}"
-
-# 设置 NVIDIA 环境变量
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES graphics,compute,utility
-
-# 暴露 API 端口
 EXPOSE 8000
 
-# 启动命令
-CMD ["blender", "--background", "--python", "app.py"]
+# 启动
+CMD ["blender", "--background", "--python", "/app/app.py"]

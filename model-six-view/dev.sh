@@ -1,0 +1,1 @@
+NO_PROXY=192.168.246.22 /Applications/Blender.app/Contents/MacOS/Blender -b -P app.py

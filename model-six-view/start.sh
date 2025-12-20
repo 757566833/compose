@@ -1,1 +1,0 @@
-/Applications/Blender.app/Contents/MacOS/Blender -b -P app.py
