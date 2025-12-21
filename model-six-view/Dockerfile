@@ -38,17 +38,19 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
         ln -s /usr/bin/blender /opt/blender/blender; \
     fi
 
+COPY requirements-locked.txt ./
 # 3. 动态安装 Python 依赖
 # 24.04 默认 Python 3.12，Blender 5.x 内部也是 3.11/3.12 左右，兼容性很好
 RUN B_PYTHON=$(find /opt/blender -name "python3*" -type f | grep bin/python || which python3) && \
     $B_PYTHON -m pip install --upgrade pip --break-system-packages || true && \
     $B_PYTHON -m pip install --no-cache-dir \
-    fastapi uvicorn python-multipart aiofiles httpx --break-system-packages
+    -r requirements-locked.txt --break-system-packages
 
 # 4. 环境配置
 ENV PATH="/opt/blender:${PATH}"
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility
+
 
 WORKDIR /app
 COPY app.py /app/
