@@ -19,11 +19,11 @@ RUN apt-get update && \
 WORKDIR /app
 
 # 3. 拷贝依赖和应用代码
-COPY requirements.txt .
+COPY requirements-locked.txt . 
 
 
 # 4. 安装 Python 依赖
-RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
+RUN pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 # ENV HF_ENDPOINT=https://hf-mirror.com

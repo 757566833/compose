@@ -78,11 +78,7 @@ async def perform_ocr(image_bytes: bytes) -> Dict[str, Any]:
         # 视业务需求决定是抛出异常还是返回空结果
         raise HTTPException(status_code=500, detail=f"推理引擎错误: {str(e)}")
 
-    # 4. 文本聚合
-    text = "\n".join([str(res.get("text", "")) for res in ocr_result if res.get("text")])
-
     return {
-        "text": text,
         "ocr_result": ocr_result
     }
 
@@ -124,7 +120,3 @@ async def ocr_from_url(request_data: TranscribeRequest):
         raise HTTPException(status_code=408, detail="请求图片 URL 超时")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"处理 URL 时发生意外错误: {str(e)}")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

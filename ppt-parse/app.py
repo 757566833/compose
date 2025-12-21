@@ -106,7 +106,7 @@ def calculate_stream_md5(file_obj) -> str:
     return hasher.hexdigest()
 
 # --- 主接口 ---
-@app.post("/ppt/process")
+@app.post("/ppt/url")
 async def process_ppt(request: ProcessRequest):
     object_name = request.object_name
     result_data = {"filenames": [], "text": []}
