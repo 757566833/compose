@@ -11,3 +11,5 @@ librosa
 numpy
 Pillow
 httpx
+einops
+timm

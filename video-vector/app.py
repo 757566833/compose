@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel, HttpUrl
 import torch
-from transformers import pipeline, CLIPProcessor, CLIPModel
+from transformers import pipeline, AutoModel
 import tempfile
 import shutil
 import os
@@ -24,9 +24,16 @@ except Exception as e:
     asr_pipeline = pipeline("automatic-speech-recognition", model="openai/whisper-small", device="cpu")
 
 # 2. CLIP 模型
-clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
-clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-print(f"CLIP Model loaded on device: {device}")
+try:
+    # 加载 CLIP 模型和处理器
+    model = AutoModel.from_pretrained(
+        "jinaai/jina-clip-v2", 
+        trust_remote_code=True,
+    ).to(device)
+    print(f"Model loaded successfully on device: {device}")
+except Exception as e:
+    print(f"Error loading model: {e}")
+truncate_dim = 512
 
 
 # --- 数据模型 ---
@@ -80,37 +87,44 @@ async def download_video(url: str) -> str:
         tmp.close()
 
 def internal_process_logic(video_path: str, sampling_fps: int, filename: str):
-    """通用的核心处理逻辑：Whisper + CLIP"""
-    # 1. 听觉处理
+    """使用 jina-clip-v2 的核心处理逻辑"""
+    
+    # 1. 听觉处理 (保持不变)
     print(f"Processing audio for: {filename}")
     transcription_result = asr_pipeline(video_path)
     transcribed_text = transcription_result["text"].strip()
 
     # 2. 视觉处理
     print(f"Extracting frames at {sampling_fps} FPS...")
-    frames = extract_frames(video_path, fps=sampling_fps)
+    frames = extract_frames(video_path, fps=sampling_fps) # 确保返回的是 PIL 图像列表
     
     visual_vector = None
     frames_processed = 0
+    truncate_dim = 512
 
     if frames:
-        clip_inputs = clip_processor(images=frames, return_tensors="pt").to(device)
+        # Jina CLIP v2 直接支持传入 PIL 图像列表
+        # model.encode_image 内部处理了预处理、特征提取和 L2 归一化
         with torch.no_grad():
-            image_features = clip_model.get_image_features(**clip_inputs)
+            # 返回形状为 (num_frames, truncate_dim) 的 numpy 数组
+            image_embeddings = model.encode_image(frames, truncate_dim=truncate_dim)
         
-        # 归一化并取平均
-        normalized_features = image_features / image_features.norm(p=2, dim=-1, keepdim=True)
-        visual_vector = normalized_features.mean(dim=0).cpu().numpy().tolist()
+        # 将多帧向量取平均，得到代表视频的全局视觉向量
+        # jina-clip 默认已做归一化，均值后建议再次归一化以保持单位长度
+        avg_vector = image_embeddings.mean(axis=0)
+        # 再次归一化 (可选，但推荐用于检索)
+        import numpy as np
+        visual_vector = (avg_vector / np.linalg.norm(avg_vector)).tolist()
+        
         frames_processed = len(frames)
 
     return {
         "filename": filename,
         "transcribed_text": transcribed_text,
         "visual_vector": visual_vector,
-        "vector_dimension": 512 if visual_vector else 0,
+        "vector_dimension": truncate_dim if visual_vector else 0,
         "frames_processed": frames_processed,
     }
-
 
 # --- 接口 1：文件上传 (原有功能) ---
 

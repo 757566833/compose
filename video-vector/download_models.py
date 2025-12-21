@@ -6,10 +6,13 @@ def download():
     # 下载 Whisper 模型
     pipeline("automatic-speech-recognition", model="openai/whisper-small")
     
-    # 下载 CLIP 模型
-    CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-    CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
-    print("All models downloaded successfully!")
+    model_name = "jinaai/jina-clip-v2"
+    print(f"正在下载图像向量化模型: {model_name}...")
+    
+    # 下载模型权重
+    AutoModel.from_pretrained(model_name, trust_remote_code=True)
+    
+    print("图像模型下载完成！")
 
 if __name__ == "__main__":
     download()
