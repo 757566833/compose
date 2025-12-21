@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY requirements-locked.txt . 
 
 # 升级 pip 并安装依赖
 RUN pip install --no-cache-dir --upgrade pip && \
