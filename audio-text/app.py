@@ -6,6 +6,7 @@ import tempfile
 import shutil
 import os
 import httpx  # 用于下载远程文件
+from pathlib import Path
 
 app = FastAPI(title="Audio Transcription Service")
 
@@ -35,7 +36,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
     if not file.content_type.startswith(('audio/', 'application/octet-stream')):
         raise HTTPException(status_code=400, detail="File must be an audio format.")
 
-    suffix = os.path.splitext(file.filename)[1]
+    suffix = Path(file.filename).suffix if file.filename else ".mp3"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp_path = tmp.name
         try:
@@ -52,12 +53,14 @@ async def transcribe_url(request_data: TranscribeRequest):
     """
     接收 JSON Body 中的 url，下载后进行转录。
     """
-    # 将 HttpUrl 对象转换为字符串
+    # 1. 将 HttpUrl 对象转换为字符串
     url_str = str(request_data.url)
-    
-    # 提取后缀：使用 Pydantic 对象的 path 属性更优雅，它会自动排除 Query 参数
+
+    # 2. 提取后缀
+    # request_data.url.path 获取的是路径部分（如 /files/music.mp3）
+    # Path(...).suffix 直接提取后缀（如 .mp3）
     url_path = request_data.url.path or ""
-    suffix = os.path.splitext(url_path)[1] or ".mp3"
+    suffix = Path(url_path).suffix or ".mp3"
     
     tmp_path = None
     try:
