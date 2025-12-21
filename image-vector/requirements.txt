@@ -14,3 +14,6 @@ torchvision
 
 # 数据处理
 numpy
+
+einops
+timm
