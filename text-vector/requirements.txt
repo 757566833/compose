@@ -11,3 +11,5 @@ transformers
 torch
 torchvision
 sentence-transformers
+einops
+timm

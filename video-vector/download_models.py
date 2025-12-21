@@ -1,5 +1,5 @@
 import torch
-from transformers import pipeline, CLIPProcessor, CLIPModel
+from transformers import pipeline, CLIPProcessor, CLIPModel, AutoModel
 
 def download():
     print("Pre-downloading models...")

@@ -8,11 +8,11 @@ app = FastAPI(title="Text Vectorization Service")
 # --- 模型加载与初始化 ---
 # 文本模型通常使用 CPU 运行，因为它对 GPU 的需求不如图像模型高
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-model_name = "all-MiniLM-L6-v2"
 
+truncate_dim = 512
 try:
     # 加载 SBERT 模型
-    model = SentenceTransformer(model_name, device=device)
+    model = SentenceTransformer('jinaai/jina-clip-v2', device=device ,trust_remote_code=True, truncate_dim=truncate_dim)
     print(f"Text Model loaded successfully on device: {device}")
 except Exception as e:
     print(f"Error loading text model: {e}")
@@ -36,15 +36,14 @@ def vectorize_text(data: TextData):
     try:
         # 1. 批量计算向量
         # convert_to_tensor=True 确保输出是 PyTorch Tensor
-        embeddings = model.encode(data.texts, convert_to_tensor=False)
+        text_embeddings = model.encode(data.texts, normalize_embeddings=True)
         
         # 2. 转换为标准的 Python list
         # embeddings 是 NumPy 数组，直接调用 tolist()
-        vectors_list = embeddings.tolist()
+        vectors_list = text_embeddings.tolist()
 
         return {
             "num_texts": len(vectors_list),
-            "vector_dimension": len(vectors_list[0]) if vectors_list else 0,
             "vectors": vectors_list
         }
 
