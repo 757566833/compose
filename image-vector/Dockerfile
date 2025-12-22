@@ -1,8 +1,14 @@
 # --- 阶段 1: 基础环境和依赖安装 ---
 FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 
+ENV HF_ENDPOINT=https://hf-mirror.com
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && \
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc \
     g++ \
@@ -13,7 +19,8 @@ WORKDIR /app
 
 # 2. 拷贝依赖文件并安装 (使用 --no-cache-dir 减小镜像)
 COPY requirements-locked.txt . 
-RUN pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt
+RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
+    pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt -i https://mirrors.aliyun.com/pypi/simple
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 ENV HF_ENDPOINT=https://hf-mirror.com

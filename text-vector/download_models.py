@@ -6,7 +6,7 @@ def download():
     print(f"正在下载文本向量化模型: {model_name}...")
     
     # 显式指定加载模型，这会触发下载到默认缓存路径 (~/.cache/torch/sentence_transformers)
-    model = SentenceTransformer(model_name, device=device ,trust_remote_code=True, truncate_dim=truncate_dim)
+    model = SentenceTransformer(model_name ,trust_remote_code=True)
     
     print("文本模型下载完成！")
 

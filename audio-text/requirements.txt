@@ -5,6 +5,7 @@ python-multipart
 httpx
 # Whisper 模型
 transformers
+torch==2.6.0
 # 底层 PyTorch
 torch
 # 音频处理库

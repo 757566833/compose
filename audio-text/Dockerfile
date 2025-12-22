@@ -1,8 +1,15 @@
 FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 
+ENV HF_ENDPOINT=https://hf-mirror.com
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ARG DEBIAN_FRONTEND=noninteractive
+
 # 1. 安装 FFmpeg
 # apt-get update & install -y ffmpeg 是安装 librosa 依赖的关键步骤
-RUN apt-get update && \
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
     gcc \
@@ -17,8 +24,8 @@ WORKDIR /app
 COPY requirements-locked.txt . 
 # 4. 安装 Python 依赖
 # 注意：这会安装 Whisper 模型和所有依赖
-RUN pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt
-
+RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
+    pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt -i https://mirrors.aliyun.com/pypi/simple
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 ENV HF_ENDPOINT=https://hf-mirror.com
 

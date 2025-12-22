@@ -8,8 +8,10 @@ python-multipart
 Pillow
 # Hugging Face 生态，实现 CLIP 模型
 transformers
-torch
-torchvision
+torch==2.6.0
+torchvision==0.21.0
 sentence-transformers
 einops
 timm
+
+sympy==1.13.1

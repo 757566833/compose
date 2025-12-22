@@ -2,7 +2,8 @@ fastapi
 uvicorn[standard]
 python-multipart 
 # 深度学习框架
-torch
+torch==2.6.0
+torchvision==0.21.0
 # 图像和文本处理
 transformers
 # 视频和音频处理
@@ -13,3 +14,5 @@ Pillow
 httpx
 einops
 timm
+
+sympy==1.13.1

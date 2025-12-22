@@ -1,9 +1,18 @@
 # 使用 python:3.10-slim 作为基础镜像
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+
+# 设置环境变量
+ENV HF_ENDPOINT=https://hf-mirror.com
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ARG DEBIAN_FRONTEND=noninteractive
+
 
 # 1. 安装 FFmpeg 和 OpenCV 的运行时依赖
 # libsm6 和 libxext6 是 OpenCV 正常运行所必需的图形库依赖
-RUN apt-get update && \
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
     libsm6 \
@@ -23,7 +32,8 @@ COPY requirements-locked.txt .
 
 
 # 4. 安装 Python 依赖
-RUN pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt
+RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
+    pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt -i https://mirrors.aliyun.com/pypi/simple
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 # ENV HF_ENDPOINT=https://hf-mirror.com

@@ -9,11 +9,13 @@ Pillow
 
 # AI 与深度学习 (指定版本以保证兼容性)
 transformers
-torch
-torchvision
+torch==2.6.0
+torchvision==0.21.0
 
 # 数据处理
 numpy
 
 einops
 timm
+
+sympy==1.13.1
