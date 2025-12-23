@@ -1,5 +1,5 @@
 # 使用 24.04 基础镜像
-FROM nvidia/cuda:13.1.0-runtime-ubuntu24.04
+FROM nvidia/cuda:13.0.2-runtime-ubuntu24.04
 
 ENV HF_ENDPOINT=https://hf-mirror.com
 ENV PYTHONDONTWRITEBYTECODE=1
