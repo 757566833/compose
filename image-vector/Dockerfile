@@ -22,6 +22,13 @@ COPY requirements-locked.txt .
 RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
     pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt -i https://mirrors.aliyun.com/pypi/simple
 
+
+# 2. 安装需要编译的库 (flash-attn)
+RUN pip install --user --no-cache-dir https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+
+# 3. 安装 xformers
+RUN pip install --user --no-cache-dir --root-user-action=ignore -U xformers --index-url https://download.pytorch.org/whl/cu124
+
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
 ENV HF_ENDPOINT=https://hf-mirror.com
 

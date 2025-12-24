@@ -46,6 +46,7 @@ def get_vector_from_temp_file(image_urls: List[str]) -> List[List[float]]:
 # --- API 接口定义 ---
 @app.post("/vectorize/image/files", summary="通过上传图片文件提取向量")
 async def vectorize_image(files: List[UploadFile] = File(...)):
+    print(f"Received {len(files)} files for vectorization.")
     # 1. 过滤并留下 image 类型的文件
     valid_images = [f for f in files if f.content_type and f.content_type.startswith('image/')]
 
@@ -57,10 +58,11 @@ async def vectorize_image(files: List[UploadFile] = File(...)):
         )
 
     temp_file_paths = []
-
+    print(f"2")
     try:
         # 3. 组成数组并持久化到临时文件
         for file in valid_images:
+            print(f"Processing file: {file.filename}, content_type: {file.content_type}")
             # 使用你提供的后缀获取逻辑
             suffix = Path(file.filename).suffix if file.filename else ".tmp"
             
@@ -75,8 +77,9 @@ async def vectorize_image(files: List[UploadFile] = File(...)):
                 tmp_file.close()
 
         # 4. 调用函数处理这些持久化后的文件路径
+        print(f"Temporary files created: {temp_file_paths}")
         results = get_vector_from_temp_file(temp_file_paths)
-        
+        print(f"Vectorization completed successfully.")
         return {
             "data": results.tolist(),
         }
