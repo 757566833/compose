@@ -1,28 +1,31 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel, HttpUrl
 import torch
-from transformers import pipeline
 import tempfile
 import shutil
 import os
 import httpx  # 用于下载远程文件
 from pathlib import Path
+from funasr import AutoModel
+from funasr.utils.postprocess_utils import rich_transcription_postprocess
+
 
 app = FastAPI(title="Audio Transcription Service")
 
 # --- 模型加载与初始化 ---
 # 自动检测设备：CUDA (NVIDIA) > MPS (Apple Silicon) > CPU
 device = "cuda:0" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-model_id = "openai/whisper-small" 
+model_dir = "FunAudioLLM/SenseVoiceSmall"
 
 try:
     # 这里的 device 参数会自动处理 MPS 或 CUDA 的分配
-    asr_pipeline = pipeline(
-        "automatic-speech-recognition", 
-        model=model_id, 
-        device=device
+    model = AutoModel(
+        model=model_dir,
+        vad_model="fsmn-vad",
+        vad_kwargs={"max_single_segment_time": 30000},
+        device=device,
+        hub="hf",
     )
-    print(f"Whisper Model loaded successfully on device: {device}")
 except Exception as e:
     print(f"Error loading Whisper model: {e}")
 
@@ -99,23 +102,33 @@ async def transcribe_url(request_data: TranscribeRequest):
 
 # 建议在 process_transcription 内部最后执行 os.remove(tmp_path)
 async def process_transcription(tmp_path: str, original_source: str):
+    print(f"Processing transcription for source: {original_source}")
     try:
         # 调用 Whisper
-        transcription_result = asr_pipeline(
-            tmp_path,
-            chunk_length_s=30,      # 每个分块的时长
-            stride_length_s=5,      # 分块间的重叠时长，增加上下文衔接的准确性
-            batch_size=8,           # 如果显存允许，增加 batch_size 可以提升速度
-            return_timestamps=True,
-            generate_kwargs={
-                "language": "chinese",
-                "task": "transcribe"
-            }
+        # transcription_result = asr_pipeline(
+        #     tmp_path,
+        #     chunk_length_s=30,      # 每个分块的时长
+        #     stride_length_s=5,      # 分块间的重叠时长，增加上下文衔接的准确性
+        #     batch_size=8,           # 如果显存允许，增加 batch_size 可以提升速度
+        #     return_timestamps=True,
+        #     generate_kwargs={
+        #         "language": "chinese",
+        #         "task": "transcribe"
+        #     }
+        # )
+        res = model.generate(
+            input=tmp_path,
+            cache={},
+            language="auto",  # "zn", "en", "yue", "ja", "ko", "nospeech"
+            use_itn=True,
+            batch_size_s=60,
+            merge_vad=True,  #
+            merge_length_s=15,
         )
         
         return {
             "source": original_source,
-            "transcribed_text": transcription_result["text"].strip(),
+            "transcribed_text": rich_transcription_postprocess(res[0]["text"]),
             "device_used": device,
         }
 
@@ -128,4 +141,4 @@ async def process_transcription(tmp_path: str, original_source: str):
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "model": model_id, "device": str(device)}
+    return {"status": "ok", "model": model_dir, "device": str(device)}
