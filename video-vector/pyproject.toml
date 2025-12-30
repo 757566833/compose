@@ -1,0 +1,6 @@
+[project]
+name = "video-vector"
+version = "0.1.0"
+description = "视频转向量"
+readme = "README.md"
+requires-python = "==3.10.14"

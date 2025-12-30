@@ -1,10 +1,17 @@
 import torch
-from transformers import pipeline, CLIPProcessor, CLIPModel, AutoModel
+from transformers import AutoModel
+from funasr import AutoModel as FunASRAutoModel
 
 def download():
     print("Pre-downloading models...")
     # 下载 Whisper 模型
-    pipeline("automatic-speech-recognition", model="openai/whisper-small")
+    audio_model = FunASRAutoModel(
+        model=model_dir,
+        vad_model="fsmn-vad",
+        vad_kwargs={"max_single_segment_time": 30000},
+        device=device,
+        hub="hf",
+    )
     
     model_name = "jinaai/jina-clip-v2"
     print(f"正在下载图像向量化模型: {model_name}...")

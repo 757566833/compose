@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel, HttpUrl
 import torch
-from transformers import pipeline, AutoModel
+from transformers import AutoModel
 import tempfile
 import shutil
 import os
@@ -9,24 +9,31 @@ import cv2
 import numpy as np
 from PIL import Image
 import httpx  # 用于异步下载视频
+from funasr import AutoModel as FunASRAutoModel
+from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
 app = FastAPI(title="Video Visual Feature Service (8003)")
 
 # --- 模型加载与初始化 ---
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
+model_dir = "FunAudioLLM/SenseVoiceSmall"
 # 1. 语音识别 (Whisper small)
 try:
-    asr_pipeline = pipeline("automatic-speech-recognition", model="openai/whisper-small", device=device)
-    print(f"Whisper Model loaded on device: {device}")
+    audio_model = FunASRAutoModel(
+        model=model_dir,
+        vad_model="fsmn-vad",
+        vad_kwargs={"max_single_segment_time": 30000},
+        device=device,
+        hub="hf",
+    )
 except Exception as e:
     print(f"ERROR: Could not load Whisper model on {device}, falling back to CPU. Detail: {e}")
-    asr_pipeline = pipeline("automatic-speech-recognition", model="openai/whisper-small", device="cpu")
 
 # 2. CLIP 模型
 try:
     # 加载 CLIP 模型和处理器
-    model = AutoModel.from_pretrained(
+    image_model = AutoModel.from_pretrained(
         "jinaai/jina-clip-v2", 
         trust_remote_code=True,
     ).to(device)
@@ -91,8 +98,17 @@ def internal_process_logic(video_path: str, sampling_fps: int, filename: str):
     
     # 1. 听觉处理 (保持不变)
     print(f"Processing audio for: {filename}")
-    transcription_result = asr_pipeline(video_path)
-    transcribed_text = transcription_result["text"].strip()
+    # transcription_result = asr_pipeline(video_path)
+    res = audio_model.generate(
+            input=video_path,
+            cache={},
+            language="auto",  # "zn", "en", "yue", "ja", "ko", "nospeech"
+            use_itn=True,
+            batch_size_s=60,
+            merge_vad=True,  #
+            merge_length_s=15,
+        )
+    transcribed_text = rich_transcription_postprocess(res[0]["text"])
 
     # 2. 视觉处理
     print(f"Extracting frames at {sampling_fps} FPS...")
@@ -107,13 +123,13 @@ def internal_process_logic(video_path: str, sampling_fps: int, filename: str):
         # model.encode_image 内部处理了预处理、特征提取和 L2 归一化
         with torch.no_grad():
             # 返回形状为 (num_frames, truncate_dim) 的 numpy 数组
-            image_embeddings = model.encode_image(frames, truncate_dim=truncate_dim)
+            image_embeddings = image_model.encode_image(frames, truncate_dim=truncate_dim)
         
         # 将多帧向量取平均，得到代表视频的全局视觉向量
         # jina-clip 默认已做归一化，均值后建议再次归一化以保持单位长度
         avg_vector = image_embeddings.mean(axis=0)
         # 再次归一化 (可选，但推荐用于检索)
-        import numpy as np
+        
         visual_vector = (avg_vector / np.linalg.norm(avg_vector)).tolist()
         
         frames_processed = len(frames)
