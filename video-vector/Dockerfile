@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
     pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt -i https://mirrors.aliyun.com/pypi/simple
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
-# ENV HF_ENDPOINT=https://hf-mirror.com
+ENV HF_ENDPOINT=https://hf-mirror.com
 
 COPY download_models.py .
 RUN python download_models.py

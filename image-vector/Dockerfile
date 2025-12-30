@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
 
 
 # 2. 安装需要编译的库 (flash-attn)
-RUN pip install --user --no-cache-dir https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+RUN pip install --user --no-cache-dir https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.3cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 
 # 3. 安装 xformers
 RUN pip install --user --no-cache-dir --root-user-action=ignore -U xformers --index-url https://download.pytorch.org/whl/cu124
