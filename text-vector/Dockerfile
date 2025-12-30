@@ -1,5 +1,5 @@
 # 使用单阶段构建简化部署
-FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
 
 # 设置环境变量
 ENV HF_ENDPOINT=https://hf-mirror.com
