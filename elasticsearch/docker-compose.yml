@@ -4,7 +4,7 @@ services:
     container_name: elasticsearch
     ports:
       - "9200:9200"
-    mem_limit: 2GB
+    mem_limit: 4GB
     restart: unless-stopped
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
@@ -27,6 +27,6 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://${ES_IP}:${ES_PORT}
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=KDSuEu7GKKENKYb1bIoU
+      - ELASTICSEARCH_PASSWORD=Rul0Shv8hYC-YVFK9sj7
 
       # elasticsearch bin/elasticsearch-reset-password -u kibana_system
