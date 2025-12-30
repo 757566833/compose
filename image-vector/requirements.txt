@@ -9,8 +9,8 @@ Pillow
 
 # AI 与深度学习 (指定版本以保证兼容性)
 transformers
-torch==2.6.0
-torchvision==0.21.0
+torch==2.3.1
+torchvision==0.18.1
 
 # 数据处理
 numpy
