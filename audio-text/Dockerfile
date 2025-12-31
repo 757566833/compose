@@ -26,12 +26,7 @@ COPY requirements-locked.txt .
 # 注意：这会安装 Whisper 模型和所有依赖
 RUN pip install --no-cache-dir --root-user-action=ignore --upgrade pip && \
     pip install --no-cache-dir --root-user-action=ignore -r requirements-locked.txt -i https://mirrors.aliyun.com/pypi/simple
-# 如果在国内构建，可以取消下面这一行的注释来使用镜像站
-ENV HF_ENDPOINT=https://hf-mirror.com
 
-# 复制下载脚本并运行
-COPY download_models.py .
-RUN python download_models.py
 
 COPY ./app.py .
 # 5. 暴露端口 (例如使用 8002)

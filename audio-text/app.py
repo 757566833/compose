@@ -12,32 +12,37 @@ from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
 app = FastAPI(title="Audio Transcription Service")
 
+MODEL_BASE = os.getenv("MODEL_PATH", "/models")
 # --- 模型加载与初始化 ---
 # 自动检测设备：CUDA (NVIDIA) > MPS (Apple Silicon) > CPU
 device = "cuda:0" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-model_dir = "FunAudioLLM/SenseVoiceSmall"
-
+model_dir = f"{MODEL_BASE}/SenseVoiceSmall"
 try:
     # 这里的 device 参数会自动处理 MPS 或 CUDA 的分配
     model = AutoModel(
         model=model_dir,
-        vad_model="fsmn-vad",
+        vad_model=f"{MODEL_BASE}/fsmn-vad",
         vad_kwargs={"max_single_segment_time": 30000},
         device=device,
         hub="hf",
+        trust_remote_code=True,     # 必须开启，以运行模型目录下的 Python 代码
+        disable_update=True         # 离线运行必备
     )
 except Exception as e:
     print(f"Error loading Whisper model: {e}")
 
-# --- API 接口定义 ---
+SUPPORTED_TYPES = ('audio/', 'video/', 'application/octet-stream')
 
 @app.post("/transcribe/audio/file")
 async def transcribe_audio(file: UploadFile = File(...)):
     """
     接收音频文件，支持长音频转录。
     """
-    if not file.content_type.startswith(('audio/', 'application/octet-stream')):
-        raise HTTPException(status_code=400, detail="File must be an audio format.")
+    if not file.content_type.startswith(SUPPORTED_TYPES):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file type: {file.content_type}. Please upload an audio or video file."
+        )
 
     suffix = Path(file.filename).suffix if file.filename else ".mp3"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -102,7 +107,7 @@ async def transcribe_url(request_data: TranscribeRequest):
 
 # 建议在 process_transcription 内部最后执行 os.remove(tmp_path)
 async def process_transcription(tmp_path: str, original_source: str):
-    print(f"Processing transcription for source: {original_source}")
+    # print(f"Processing transcription for source: {original_source}")
     try:
         # 调用 Whisper
         # transcription_result = asr_pipeline(
