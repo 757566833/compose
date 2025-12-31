@@ -13,14 +13,17 @@ import shutil
 
 app = FastAPI(title="Image Vectorization Service")
 
+MODEL_BASE = os.getenv("MODEL_PATH", "/models")
 # --- 模型加载与初始化 ---
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 model_name = "jinaai/jina-clip-v2"
 
+full_model_path = os.path.abspath(os.path.join(MODEL_BASE, model_name))
+
 try:
     # 加载 CLIP 模型和处理器
     model = AutoModel.from_pretrained(
-        model_name, 
+        full_model_path, 
         trust_remote_code=True,
     ).to(device)
     print(f"Model loaded successfully on device: {device}")
@@ -106,6 +109,35 @@ async def vectorize_url(request_data: TranscribeRequest):
         "data": vector.tolist(),
     }
 
+
+class TextData(BaseModel):
+    """定义接口接收的数据结构"""
+    texts: list[str] # 接收一个字符串列表，以便批量处理
+@app.post("/vectorize/text")
+def vectorize_text(data: TextData):
+    """
+    接收一个文本列表，返回其对应的向量（Embeddings）
+    """
+    if not data.texts:
+        return {"vectors": []}
+
+    try:
+        # 1. 批量计算向量
+        # convert_to_tensor=True 确保输出是 PyTorch Tensor
+        text_embeddings = model.encode(data.texts, normalize_embeddings=True)
+        
+        # 2. 转换为标准的 Python list
+        # embeddings 是 NumPy 数组，直接调用 tolist()
+        vectors_list = text_embeddings.tolist()
+
+        return {
+            "num_texts": len(vectors_list),
+            "vectors": vectors_list
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal processing error: {e}")
+    
 # --- 健康检查接口 ---
 
 @app.get("/health", summary="服务健康状态检查")
