@@ -3,10 +3,9 @@ from huggingface_hub import snapshot_download
 
 # --- 配置部分 ---
 local_root_dir = "./models"
-clip_model_name = "jinaai/jina-clip-v2"
 embeddings_model_name = "jinaai/jina-embeddings-v3"
 
-model_local_dir = os.path.join(local_root_dir, clip_model_name)
+model_local_dir = os.path.join(local_root_dir, embeddings_model_name)
 
 # --- 修正后的 Hugging Face ID ---
 
@@ -32,11 +31,10 @@ if __name__ == "__main__":
         os.makedirs(local_root_dir)
 
     # 执行下载
-    clip_model_path = download_hf_model(clip_model_name, model_local_dir)
-    embeddings_path = download_hf_model(embeddings_model_name, os.path.join(local_root_dir, embeddings_model_name))
+    embeddings_path = download_hf_model(embeddings_model_name, model_local_dir)
 
     print("-" * 30)
-    if clip_model_path and embeddings_path:
-        print("所有模型已就绪！")
+    if embeddings_path:
+        print("嵌入模型已就绪！")
     else:
         print("模型下载失败，请检查 ID 是否正确。")

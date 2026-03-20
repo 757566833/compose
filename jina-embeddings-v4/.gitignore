@@ -1,0 +1,4 @@
+venv
+docker.log
+__pycache__
+models
