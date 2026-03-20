@@ -10,6 +10,8 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && 
     sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
     gcc \
     g++ \
     python3-dev && \
@@ -30,11 +32,11 @@ RUN pip install --user --no-cache-dir https://github.com/Dao-AILab/flash-attenti
 RUN pip install --user --no-cache-dir --root-user-action=ignore -U xformers --index-url https://download.pytorch.org/whl/cu124
 
 # 如果在国内构建，可以取消下面这一行的注释来使用镜像站
-ENV HF_ENDPOINT=https://hf-mirror.com
+# ENV HF_ENDPOINT=https://hf-mirror.com
 
-# 复制下载脚本并运行
-COPY download_models.py .
-RUN python download_models.py
+# # 复制下载脚本并运行
+# COPY download_models.py .
+# RUN python download_models.py
 
 COPY ./app.py .
 # 3. 暴露端口

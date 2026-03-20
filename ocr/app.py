@@ -120,3 +120,13 @@ async def ocr_from_url(request_data: TranscribeRequest):
         raise HTTPException(status_code=408, detail="请求图片 URL 超时")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"处理 URL 时发生意外错误: {str(e)}")
+
+@app.get("/health", summary="服务健康状态检查")
+def health_check():
+    """
+    返回当前模型信息和运行设备状态
+    """
+    return {
+        "status": "active",
+        "model": "PaddleX OCR",
+    }

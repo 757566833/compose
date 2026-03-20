@@ -11,6 +11,8 @@ WORKDIR /app
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources || \
     sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
     apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
     libgl1 \
     libglib2.0-0 \
     libgomp1 \

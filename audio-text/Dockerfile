@@ -12,6 +12,8 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && 
     apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
+    curl \
+    ca-certificates \
     gcc \
     g++ \
     python3-dev && \

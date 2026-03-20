@@ -1,7 +1,7 @@
 services:
-  image-vector:
-    image: image-vector:latest
-    container_name: image-vector
+  jinaai-vector:
+    image: jinaai-vector:latest
+    container_name: jinaai-vector
     deploy:
       resources:
         reservations:
