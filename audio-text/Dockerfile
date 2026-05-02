@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime
 
 ENV HF_ENDPOINT=https://hf-mirror.com
 ENV PYTHONDONTWRITEBYTECODE=1

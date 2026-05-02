@@ -1,9 +1,25 @@
-
 services:
   redis:
     container_name: local_redis
-    image: redis:7.2.3
+    image: redis:7.4.8  # 注意：目前官方稳定版是 7.x，8.x 尚未正式发布，建议检查版本号
     ports:
-      - 6379:6379
-    command: ["redis-server", "--requirepass", "1234567890"]
+      - "6379:6379"
+    # 在 command 中依次添加参数即可
+    command: [
+      "redis-server", 
+      "--requirepass", "123456", 
+      "--maxmemory", "2gb", 
+      "--maxmemory-policy", "allkeys-lru"
+    ]
+    # 建议在 Docker 层面也限制内存，防止宿主机 OOM
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 2g
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "1234567890", "ping"]
+      interval: 10s      # 每 10 秒检查一次
+      timeout: 5s       # 每次检查超过 5 秒视为超时
+      retries: 5        # 连续失败 5 次后认为容器不健康
+      start_period: 5s  # 容器启动后 5 秒内发生的失败不计入重试次数
     restart: always

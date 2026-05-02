@@ -19,36 +19,168 @@ logger = logging.getLogger(__name__)
 
 # 文件验证函数
 def validate_audio_file(file_path: str) -> bool:
-    """通过文件头验证音频/视频文件类型"""
+    """通过文件头验证音频/视频文件类型
+    
+    支持的音频格式:
+    - WAV: RIFF...WAVE
+    - MP3: ID3 tag 或 MPEG frame header (0xFFE)
+    - FLAC: fLaC
+    - OGG: OggS (Vorbis/Opus/FLAC in OGG)
+    - AAC: ADIF 或 ADTS
+    - M4A/M4B: ftyp (MP4 container)
+    - WMA/ASF: 0x30 26 B2 75
+    - AMR: #!AMR
+    - AIFF: FORM...AIFF
+    - AU/SND: .snd
+    - APE: MAC
+    - AC3: 0x0B 0x77
+    - DSD/DSF: DSD 
+    - DTS: 7F FE 80 01
+    - MPC: MP+
+    - WV: wvpk
+    - TTA: TTA1
+    - VOC: Creative Voice File
+    - WavPack: wvpk
+    
+    支持的视频格式 (提取音频):
+    - MP4/M4V/3GP/MOV: ftyp
+    - AVI: RIFF...AVI
+    - MKV/WebM: 1A 45 DF A3
+    - FLV: FLV
+    - WMV: 0x30 26 B2 75 (ASF)
+    - MPEG/MPG/VOB: 0x00 0x00 0x01 (MPEG-PS)
+    - TS/M2TS: 0x47 (MPEG-TS sync byte)
+    - RM/RMVB: .RMF
+    - IVF: DKIF
+    - OGV: OggS
+    """
     try:
         with open(file_path, 'rb') as f:
-            header = f.read(12)  # 读取前12字节
-
-        # 常见音频/视频文件头检查
-        # MP3: ID3 tag或FF FB/FF F3等
-        # WAV: "RIFF"
-        # FLAC: "fLaC"
-        # OGG: "OggS"
-        # MP4/M4A: "ftyp" at offset 4
-        # AVI: "RIFF"
+            header = f.read(24)  # 读取更多字节以支持更多格式
 
         if len(header) < 4:
             return False
 
-        # 检查常见格式
-        if header.startswith(b'RIFF'):  # WAV, AVI
+        # === 音频格式 ===
+        
+        # WAV (RIFF...WAVE)
+        if header.startswith(b'RIFF') and len(header) >= 12 and header[8:12] == b'WAVE':
             return True
-        elif header.startswith(b'fLaC'):  # FLAC
+        
+        # FLAC
+        if header.startswith(b'fLaC'):
             return True
-        elif header.startswith(b'OggS'):  # OGG
+        
+        # OGG (Vorbis, Opus, FLAC in OGG)
+        if header.startswith(b'OggS'):
             return True
-        elif header.startswith(b'ID3'):  # MP3 with ID3 tag
+        
+        # MP3 with ID3 tag
+        if header.startswith(b'ID3'):
             return True
-        elif len(header) >= 8 and header[4:8] == b'ftyp':  # MP4, M4A
+        
+        # MP3 MPEG frame header (FFE0-FFFF)
+        if len(header) >= 2 and header[0] == 0xFF and (header[1] & 0xE0) == 0xE0:
             return True
-        elif len(header) >= 2 and header[:2] in (b'\xFF\xFB', b'\xFF\xF3', b'\xFF\xFA'):  # MP3 frame
+        
+        # AAC ADTS (FFF0-FFFF)
+        if len(header) >= 2 and header[0] == 0xFF and (header[1] & 0xF0) == 0xF0:
             return True
-
+        
+        # AAC ADIF
+        if header.startswith(b'ADIF'):
+            return True
+        
+        # WMA/ASF
+        if header.startswith(b'\x30\x26\xB2\x75'):
+            return True
+        
+        # AMR
+        if header.startswith(b'#!AMR'):
+            return True
+        
+        # AIFF (FORM...AIFF or FORM...AIFC)
+        if header.startswith(b'FORM') and len(header) >= 12 and header[8:12] in (b'AIFF', b'AIFC'):
+            return True
+        
+        # AU/SND (Sun/NeXT audio)
+        if header.startswith(b'.snd'):
+            return True
+        
+        # APE (Monkey's Audio)
+        if header.startswith(b'MAC '):
+            return True
+        
+        # AC3 (Dolby Digital)
+        if header.startswith(b'\x0B\x77'):
+            return True
+        
+        # DSF (DSD audio)
+        if header.startswith(b'DSD '):
+            return True
+        
+        # DTS
+        if header.startswith(b'\x7F\xFE\x80\x01'):
+            return True
+        
+        # MPC (Musepack)
+        if header.startswith(b'MP+'):
+            return True
+        
+        # WavPack
+        if header.startswith(b'wvpk'):
+            return True
+        
+        # TTA (True Audio)
+        if header.startswith(b'TTA1'):
+            return True
+        
+        # VOC (Creative Voice)
+        if header.startswith(b'Creative Voice File'):
+            return True
+        
+        # === 视频格式 (可以提取音频) ===
+        
+        # MP4/M4A/M4V/3GP/MOV/HEIC (ftyp at offset 4)
+        if len(header) >= 12 and header[4:8] == b'ftyp':
+            return True
+        
+        # AVI (RIFF...AVI )
+        if header.startswith(b'RIFF') and len(header) >= 12 and header[8:12] == b'AVI ':
+            return True
+        
+        # MKV/WebM (Matroska)
+        # EBML header starts with 1A 45 DF A3
+        if header.startswith(b'\x1A\x45\xDF\xA3'):
+            return True
+        
+        # FLV (Flash Video)
+        if header.startswith(b'FLV'):
+            return True
+        
+        # MPEG-PS (MPEG-1/MPEG-2 Program Stream)
+        if header.startswith(b'\x00\x00\x01'):
+            return True
+        
+        # MPEG-TS (Transport Stream) - sync byte 0x47 at start or offset
+        if header[0] == 0x47:
+            return True
+        # TS sometimes has extra header
+        if len(header) >= 188 and header[4] == 0x47:
+            return True
+        
+        # RM/RMVB (RealMedia)
+        if header.startswith(b'.RMF'):
+            return True
+        
+        # IVF (Indeo Video Format)
+        if header.startswith(b'DKIF'):
+            return True
+        
+        # SWF (Flash, some have audio)
+        if header.startswith(b'FWS') or header.startswith(b'CWS'):
+            return True
+        
         return False
     except Exception:
         return False

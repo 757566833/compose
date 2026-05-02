@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import json
 import httpx
+import tempfile
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel, HttpUrl
 from typing import Any, List, Dict, Tuple, Optional
@@ -37,6 +38,10 @@ def get_safe_filename(filename: Optional[str]) -> str:
     # 如果过滤后为空，返回默认值
     return name if name.strip() else "file"
 
+# PDF 识别（通过文件头魔数）
+def is_pdf(data: bytes) -> bool:
+    return len(data) >= 4 and data[:4] == b'%PDF'
+
 # 图片验证函数（使用cv2）
 def validate_image_file(image_bytes: bytes) -> bool:
     """验证图片文件格式"""
@@ -46,6 +51,10 @@ def validate_image_file(image_bytes: bytes) -> bool:
         return img is not None
     except Exception:
         return False
+
+def validate_ocr_file(data: bytes) -> bool:
+    """验证文件是否为支持的 OCR 输入（PDF 或 cv2 可解码的图片）"""
+    return is_pdf(data) or validate_image_file(data)
 
 # ---------------- 初始化 ----------------
 
@@ -83,33 +92,41 @@ def preprocess_image(img: np.ndarray) -> np.ndarray:
         img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
     return img
 
-async def perform_ocr(image_bytes: bytes) -> Dict[str, Any]:
+def _collect_ocr_results(results) -> List[Dict[str, Any]]:
+    ocr_result = []
+    for item in results:
+        clean_item = {k: v for k, v in item.items() if check_serializable(v)}
+        ocr_result.append(clean_item)
+    return ocr_result
+
+async def perform_ocr(file_bytes: bytes) -> Dict[str, Any]:
     """
-    核心公共 OCR 逻辑：从字节流到识别结果
+    核心公共 OCR 逻辑：支持图片（JPEG/PNG/BMP/TIFF/WebP 等 cv2 支持的格式）与 PDF
     """
     if ocr_model is None:
         raise HTTPException(status_code=503, detail="OCR 服务未就绪")
 
-    # 1. 解码
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    if img is None:
-        raise HTTPException(status_code=400, detail="图片解码失败，请检查文件格式")
-
-    # 2. 预处理
-    img = preprocess_image(img)
-
-    # 3. 推理
-    ocr_result = []
     try:
-        results = ocr_model.predict(img)
-        # 清洗结果，PaddleX 的结果项可能包含不可序列化的对象
-        for item in results:
-            clean_item = {k: v for k, v in item.items() if check_serializable(v)}
-            ocr_result.append(clean_item)
+        if is_pdf(file_bytes):
+            # PDF 交由 PaddleX 直接按页处理（内部使用 pypdfium2 渲染）
+            with tempfile.TemporaryDirectory() as tmpdir:
+                pdf_path = os.path.join(tmpdir, "input.pdf")
+                with open(pdf_path, "wb") as f:
+                    f.write(file_bytes)
+                results = ocr_model.predict(pdf_path)
+                ocr_result = _collect_ocr_results(results)
+        else:
+            nparr = np.frombuffer(file_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if img is None:
+                raise HTTPException(status_code=400, detail="文件解码失败，请上传有效的图片或 PDF 文件")
+            img = preprocess_image(img)
+            results = ocr_model.predict(img)
+            ocr_result = _collect_ocr_results(results)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"PaddleX 推理异常: {str(e)}")
-        # 视业务需求决定是抛出异常还是返回空结果
         raise HTTPException(status_code=500, detail=f"推理引擎错误: {str(e)}")
 
     return {
@@ -120,19 +137,15 @@ async def perform_ocr(image_bytes: bytes) -> Dict[str, Any]:
 
 @app.post("/ocr/file")
 async def ocr_from_file(file: UploadFile = File(...)):  # 无文件大小限制
-    """处理上传的文件"""
+    """处理上传的文件，支持图片（JPEG/PNG/BMP/TIFF/WebP 等）与 PDF"""
     logger.info(f"OCR file upload: {file.filename}, size: {file.size}, type: {file.content_type}")
-
-    # 基础内容类型检查
-    if not file.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail="请上传图片格式文件")
 
     contents = await file.read()
 
-    # 图片验证
-    if not validate_image_file(contents):
-        logger.warning(f"Invalid image file: {file.filename}")
-        raise HTTPException(status_code=400, detail="图片文件格式无效，请上传有效的图片文件")
+    # 基于文件内容验证（不依赖 content-type，兼容 image/* 与 application/pdf）
+    if not validate_ocr_file(contents):
+        logger.warning(f"Unsupported or invalid file: {file.filename}")
+        raise HTTPException(status_code=400, detail="文件格式无效，请上传有效的图片或 PDF 文件")
 
     logger.info(f"File validated successfully: {file.filename}")
     return await perform_ocr(contents)
@@ -160,19 +173,19 @@ async def ocr_from_url(request_data: TranscribeRequest):
             content = await response.aread()
 
             content_type = response.headers.get("content-type", "")
-            if "image" not in content_type:
-                # 某些 URL 可能不带 content-type，这里根据实际情况决定是否强制拦截
+            if "image" not in content_type and "pdf" not in content_type:
+                # 某些 URL 可能不带 content-type，仅记录警告，最终以内容验证为准
                 logger.warning(f"警告: 响应 Content-Type 为 {content_type}")
 
-            # 验证图片格式
-            if not validate_image_file(content):
-                logger.warning(f"Invalid image file from URL: {url}")
+            # 基于文件内容验证（支持图片与 PDF）
+            if not validate_ocr_file(content):
+                logger.warning(f"Invalid file from URL: {url}")
                 raise HTTPException(
                     status_code=400,
-                    detail="URL返回的图片文件格式无效，请提供有效的图片URL"
+                    detail="URL 返回的文件格式无效，请提供有效的图片或 PDF URL"
                 )
 
-            logger.info(f"URL image validated successfully: {url}, size: {len(content)} bytes")
+            logger.info(f"URL file validated successfully: {url}, size: {len(content)} bytes")
             return await perform_ocr(content)
 
     except httpx.TimeoutException:
