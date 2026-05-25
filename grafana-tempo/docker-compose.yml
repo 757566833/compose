@@ -15,4 +15,10 @@ services:
       - ./tempo.yaml:/etc/tempo.yaml           # 挂配置文件
       - ./tempo-data:/var/tempo          # 挂数据目录
     command: [ "-config.file=/etc/tempo.yaml" ] # 指定启动参数
-    
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3200/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+

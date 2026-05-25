@@ -18,6 +18,12 @@ services:
       - xpack.ml.use_auto_machine_memory_percent=true
       - discovery.type=single-node
       - ELASTIC_PASSWORD=changeme
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -u elastic:changeme http://localhost:9200/_cluster/health | grep -E '\"status\":\"(green|yellow)\"' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
   kibana:
     image: docker.elastic.co/kibana/kibana:9.2.3
     container_name: kibana
@@ -28,5 +34,11 @@ services:
       - ELASTICSEARCH_HOSTS=http://${ES_IP}:${ES_PORT}
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=Rul0Shv8hYC-YVFK9sj7
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
       # elasticsearch bin/elasticsearch-reset-password -u kibana_system

@@ -11,3 +11,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 123456
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s

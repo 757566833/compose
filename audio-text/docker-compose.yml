@@ -18,3 +18,9 @@ services:
       - ./temp_data:/tmp
       - ./models:/models:ro   # 映射模型存储目录，设置为只读
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/ || wget -qO- http://localhost:8000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

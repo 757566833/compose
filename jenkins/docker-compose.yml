@@ -11,3 +11,9 @@ services:
       - "50000:50000"
     volumes:
       - ./data:/var/jenkins_home
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s

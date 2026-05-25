@@ -11,3 +11,9 @@ services:
     volumes:
       - ./data/lib:/var/lib
       - ./data/log:/var/log
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSk https://localhost:443/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s

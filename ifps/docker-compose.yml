@@ -14,3 +14,9 @@ services:
       - "0.0.0.0:5001:5001"
       - "4001:4001"
       - "4001:4001/udp"
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
