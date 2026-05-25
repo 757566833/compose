@@ -1,0 +1,6 @@
+[project]
+name = "jina-reranker-m0"
+version = "0.1.0"
+description = "多模态 rerank 服务（Jina Reranker M0）"
+readme = "README.md"
+requires-python = "==3.10.14"

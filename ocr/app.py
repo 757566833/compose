@@ -7,8 +7,10 @@ import numpy as np
 import json
 import httpx
 import tempfile
+import base64
+import binascii
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, model_validator
 from typing import Any, List, Dict, Tuple, Optional
 
 from paddlex import create_pipeline
@@ -69,8 +71,41 @@ except Exception as e:
 # ---------------- 模型与工具函数 ----------------
 
 class TranscribeRequest(BaseModel):
-    url: HttpUrl
+    url: Optional[HttpUrl] = None
+    base64: Optional[str] = None
     headers: Optional[Dict[str, str]] = None
+
+    @model_validator(mode="after")
+    def _check_url_or_base64(self) -> "TranscribeRequest":
+        if not self.url and not self.base64:
+            raise ValueError("必须提供 url 或 base64 其中之一")
+        return self
+
+
+def decode_base64_input(b64: str) -> bytes:
+    """
+    解码 base64 输入，兼容两种格式：
+    - 纯 base64 字符串
+    - 带 data URI 前缀（如 data:image/png;base64,xxx）
+    """
+    if not b64 or not isinstance(b64, str):
+        raise HTTPException(status_code=400, detail="base64 内容为空")
+
+    s = b64.strip()
+    # 去除 data URI 前缀
+    if s.startswith("data:"):
+        comma_idx = s.find(",")
+        if comma_idx == -1:
+            raise HTTPException(status_code=400, detail="无效的 data URI 格式")
+        s = s[comma_idx + 1:]
+
+    # 移除可能的空白字符（换行、空格等）
+    s = re.sub(r"\s+", "", s)
+
+    try:
+        return base64.b64decode(s, validate=True)
+    except (binascii.Error, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"base64 解码失败: {str(e)}")
 
 def check_serializable(obj: Any) -> bool:
     """确保 OCR 结果可以转为 JSON"""
@@ -152,7 +187,22 @@ async def ocr_from_file(file: UploadFile = File(...)):  # 无文件大小限制
 
 @app.post("/ocr/url")
 async def ocr_from_url(request_data: TranscribeRequest):
-    """处理图片 URL，支持自定义 headers 用于访问私有文件"""
+    """处理图片，支持 URL 或 base64（纯 base64 或带 data URI 前缀）输入"""
+    # 优先处理 base64
+    if request_data.base64:
+        logger.info(f"OCR base64 processing: length={len(request_data.base64)}")
+        content = decode_base64_input(request_data.base64)
+
+        if not validate_ocr_file(content):
+            logger.warning("Invalid file from base64 input")
+            raise HTTPException(
+                status_code=400,
+                detail="base64 解码后的文件格式无效，请提供有效的图片或 PDF"
+            )
+
+        logger.info(f"Base64 file validated successfully, size: {len(content)} bytes")
+        return await perform_ocr(content)
+
     url = str(request_data.url)
     headers = request_data.headers or {}
 

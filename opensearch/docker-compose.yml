@@ -1,34 +1,38 @@
-services:                                                                                                                
-    opensearch:                                             
-      image: opensearchproject/opensearch:1.3.20
-      container_name: opensearch                                                                                           
-      ports:
-        - "9200:9200"                                                                                                      
-      mem_limit: 4GB                                        
+services:                                                                                                                                                                
+    opensearch:
+      image: opensearchproject/opensearch:3.3.0                                                                                                                            
+      container_name: opensearch                                                                                                                                           
       restart: unless-stopped
+      ports:                                                                                                                                                               
+        - "9200:9200"
+        - "9600:9600"           # performance-analyzer
+      mem_limit: 4GB                                                                                                                                                       
       ulimits:
-        memlock:                                                                                                           
-          soft: -1
-          hard: -1                                                                                                         
-        nofile:                                             
-          soft: 65536
-          hard: 65536
-      volumes:
-        - ./osdata:/usr/share/opensearch/data
-        - ./osplugins:/usr/share/opensearch/plugins                                                                        
+        memlock: { soft: -1, hard: -1 }                                                                                                                                    
+        nofile:  { soft: 65536, hard: 65536 }                                                                                                                              
       environment:
-        - discovery.type=single-node                                                                                       
-        - bootstrap.memory_lock=true                        
-        - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"                                                                             
-        - DISABLE_SECURITY_PLUGIN=true            # dev 关 security，HTTP 直连
-        - DISABLE_INSTALL_DEMO_CONFIG=true                                                                                 
-                                                                                                                           
-    opensearch-dashboards:                                                                                                 
-      image: opensearchproject/opensearch-dashboards:1.3.18                                                                
-      container_name: opensearch-dashboards                 
+        - discovery.type=single-node                                                                                                                                       
+        - bootstrap.memory_lock=true
+        - cluster.name=os-dev                                                                                                                                              
+        - node.name=os-dev-0                                                                                                                                               
+        - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx2g"
+        - DISABLE_SECURITY_PLUGIN=true                                                                                                                                     
+        - DISABLE_INSTALL_DEMO_CONFIG=true
+        # 让本机 ml 能力可用而不强求专用 ml 节点                                                                                                                           
+        - plugins.ml_commons.only_run_on_ml_node=false                                                                                                                     
+        - plugins.ml_commons.native_memory_threshold=99                                                                                                                    
+      volumes:                                                                                                                                                             
+        - ./osdata:/usr/share/opensearch/data                                                                                                                                
+        - ./osplugins:/usr/share/opensearch/plugins   # 装的插件持久化                                                                                                                                                                                                                                                  
+   
+    opensearch-dashboards:                                                                                                                                                 
+      image: opensearchproject/opensearch-dashboards:3.3.0
+      container_name: opensearch-dashboards                                                                                                                                
       restart: unless-stopped
-      ports:                                                                                                               
+      ports:                                                                                                                                                               
         - "5601:5601"
-      environment:                                                                                                         
-        - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'     
-        - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true  # 跟 OpenSearch 关 security 对齐
+      environment:
+        - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'
+        - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true                                                                                                                          
+      depends_on: [ opensearch ]                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                          
