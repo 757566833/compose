@@ -1,0 +1,42 @@
+services:
+  n8n:
+    image: n8nio/n8n:1.114.4
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      # 基础配置
+      GENERIC_TIMEZONE: Asia/Shanghai
+      TZ: Asia/Shanghai
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      # 安全：开启 Basic Auth（按需修改账号密码）
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin123
+      # 加密密钥（首次启动后请勿更改，否则历史凭据无法解密）
+      N8N_ENCRYPTION_KEY: please-change-me-to-a-long-random-string
+      # 任务运行器（v1.x 推荐开启，未来版本默认）
+      N8N_RUNNERS_ENABLED: "true"
+      # 关闭遥测/匿名上报（可选）
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      # 使用 SQLite（默认）；如需 Postgres，取消下面注释并配置
+      # DB_TYPE: postgresdb
+      # DB_POSTGRESDB_HOST: postgres
+      # DB_POSTGRESDB_PORT: 5432
+      # DB_POSTGRESDB_DATABASE: n8n
+      # DB_POSTGRESDB_USER: n8n
+      # DB_POSTGRESDB_PASSWORD: n8n_password
+    volumes:
+      - ./data:/home/node/.n8n
+      - ./files:/files
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
