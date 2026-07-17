@@ -1,0 +1,5 @@
+files/
+docker.log/
+.git/
+.DS_Store
+*.md

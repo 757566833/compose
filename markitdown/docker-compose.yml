@@ -1,0 +1,33 @@
+services:
+  markitdown:
+    build: .
+    image: markitdown:latest
+    container_name: markitdown
+    ports:
+      - "3001:3001"
+    volumes:
+      # 宿主机放待转换文件的目录；MCP 工具用 file:///workdir/xxx.pdf 访问
+      - ./files:/workdir
+    restart: always
+    healthcheck:
+      # 探活一律 127.0.0.1（禁 localhost，busybox/纯 IPv4 栈下 ::1 不回退）
+      # /mcp 对裸 GET 返回 4xx 也算进程活着，故不用 -f
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:3001/mcp || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  markitdown-api:
+    image: markitdown:latest
+    container_name: markitdown-api
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "3002", "--app-dir", "/app"]
+    ports:
+      - "3002:3002"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
