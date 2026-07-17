@@ -1,0 +1,13 @@
+services:
+  ssh-proxy:
+    build: .
+    container_name: ssh-proxy
+    restart: unless-stopped
+    ports:
+      - "${LOCAL_PORT}:${LOCAL_PORT}"
+    environment:
+      SSH_USER: ${SSH_USER}
+      SSH_HOST: ${SSH_HOST}
+      REMOTE_PROXY: ${REMOTE_PROXY}
+      REMOTE_PORT: ${REMOTE_PORT}
+      LOCAL_PORT: ${LOCAL_PORT}
